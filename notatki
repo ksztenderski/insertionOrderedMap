@@ -1,0 +1,50 @@
+destruktor i konstruktor kopiujacy nie zglasza wyjatku
+
+zaleznosc od exception
+no_throw
+strong
+weak
+
+no_throw && no_throw -> no_throw
+
+strong && no_throw -> no_throw
+
+no_throw && strong -> weak
+
+strong && strong -> weak
+
+
+
+triki:
+1)
+make copy; // strong, O(n)
+modify copy; // weak
+swap; // no_throw, O(1)
+
+2)
+op1; // strong
+try{
+    op2; // strong
+}
+catch (...) {
+    revert op1; // no_throw
+    throw;
+}
+
+3)
+Guard guard(...);
+modify;
+guard.success();
+
+4)
+PIMP - pointer to implementation
+shared_ptr - uwaga na petle!
+
+make_shared<T>();
+
+
+
+użyć kontenerów z stl
+jeden na obiekty, drugi na kolejność
+
+operator=(T a) a nie operator=(T const &a)
