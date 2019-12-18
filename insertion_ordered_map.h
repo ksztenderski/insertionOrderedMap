@@ -2,18 +2,23 @@
 #define INSERTION_ORDERED_MAP_H
 
 #include <functional>
+#include <list>
 
 class lookup_error : std::exception {
 };
 
 template<class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
+private:
+    std::list<std::pair<K, V>> list;
+    std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash> unorderedMap;
+
 public:
-    insertion_ordered_map() {}
+    insertion_ordered_map() = default;
 
     insertion_ordered_map(insertion_ordered_map const &other) {}
 
-    insertion_ordered_map(insertion_ordered_map &&other) {}
+    insertion_ordered_map(insertion_ordered_map &&other) noexcept {}
 
     insertion_ordered_map &operator=(insertion_ordered_map other) {}
 
@@ -29,9 +34,9 @@ public:
 
     V &operator[](K const &k) {}
 
-    size_t size() const {}
+    [[nodiscard]] size_t size() const {}
 
-    bool empty() const {}
+    [[nodiscard]] bool empty() const {}
 
     void clear() {}
 
