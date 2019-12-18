@@ -1,7 +1,7 @@
 #include "insertion_ordered_map.h"
 #include <cassert>
 #include <vector>
-
+#include <iostream>
 namespace {
   auto f(insertion_ordered_map<int, int> q)
   {
@@ -11,7 +11,24 @@ namespace {
 
 int main()
 {
-  int keys[] = {3, 1, 2};
+	insertion_ordered_map<int, int> map;
+	if (map.insert(1, 1))
+		std::cout<<"elo"<<std::endl;
+	std::cout<<map.at(1);
+/*
+std::unordered_map<int, int> sth;
+sth.emplace(std::make_pair(1, 1));
+	auto sth2 = sth.emplace(std::make_pair(1, 1));
+auto sth3 = sth2.first->;*/
+
+/*	std::unordered_map<int, int> map;
+	map.emplace(1, 1);
+auto sth = map.at(1);
+
+	std::cout<<map.at(1);
+		//std::cout<<"elo"<<std::endl;
+*/
+  /*int keys[] = {3, 1, 2};
 
   insertion_ordered_map<int, int> iom1 = f({});
 
@@ -77,6 +94,6 @@ int main()
   for (int i = 0; i < 1000000; i++) {
     vec.push_back(iom1);  // Wszystkie obiekty w vec współdzielą dane.
   }
-
+*/
   return 0;
 }

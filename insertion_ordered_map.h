@@ -2,7 +2,9 @@
 #define INSERTION_ORDERED_MAP_H
 
 #include <functional>
-#include <list>
+#include <unordered_map>
+#include <utility>
+
 
 class lookup_error : std::exception {
 };
@@ -10,33 +12,69 @@ class lookup_error : std::exception {
 template<class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
-    std::list<std::pair<K, V>> list;
-    std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash> unorderedMap;
+	struct Node {
+		K key;
+		V value;
+		Node *prev, *next;
+	} typedef Node;
+
+	Node *first = nullptr, *last = nullptr;
+
+	void add_new_Node() {
+		Node* ret = new Node;
+		ret->prev = last;
+		ret->next = nullptr;
+		last = ret;
+	}
+
+	std::unordered_map<K, Node*> map;
+
 
 public:
-    insertion_ordered_map() = default;
+    insertion_ordered_map() {
+    	add_new_Node();
+    	first = last;
+    }
 
     insertion_ordered_map(insertion_ordered_map const &other) {}
 
-    insertion_ordered_map(insertion_ordered_map &&other) noexcept {}
+    insertion_ordered_map(insertion_ordered_map &&other) {}
 
     insertion_ordered_map &operator=(insertion_ordered_map other) {}
 
-    bool insert(K const &k, V const &v) {}
+    bool insert(K const &k, V const &v) {
+    	last->key = k;
+    	last->value = v;
+    	auto res = map.emplace(std::make_pair(k, last));
+    	if (res.second) {
+    		add_new_Node();
+    	}
+    	else {
+    		Node* node = res.first->second;
+    		node->prev->next = node->next;
+    		node->next->prev = node->prev;
+    		last->next = node;
+    		node->prev = last;
+    		last = node;
+    	}
+    	return res.second;
+    }
 
     void erase(K const &k) {}
 
     void merge(insertion_ordered_map const &other) {}
 
-    V &at(K const &k) {}
+    V &at(K const &k) {
+    	return map.at(k)->value;
+    }
 
     V const &at(K const &k) const {}
 
     V &operator[](K const &k) {}
 
-    [[nodiscard]] size_t size() const {}
+    size_t size() const {}
 
-    [[nodiscard]] bool empty() const {}
+    bool empty() const {}
 
     void clear() {}
 
