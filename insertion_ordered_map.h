@@ -17,9 +17,44 @@ private:
     struct map_entity {
         std::list<std::pair<K, V>> list;
         std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash> map;
+
+        map_entity(map_entity const &other) : list(other.list), map(other.map) {}
+
+        bool insert(K const &k, V const &v) {
+        }
+
+        typename std::list<std::pair<K, V>>::iterator find(K const &k) {
+            auto tmp = map.find(k);
+            if (tmp == map.end()) {
+                throw lookup_error();
+            }
+
+            return tmp;
+        }
+
+        void erase(K const &k) {
+            auto tmp = find(k);
+
+            list.erase(tmp);
+            map.erase(tmp.first);
+        }
+
+
+        void clear() {
+            map.clear();
+            list.clear();
+        }
     };
 
     std::shared_ptr<map_entity> sharedPtr;
+
+    void copySharedPtrIfNecessary() {
+        if (sharedPtr.use_count() > 1) {
+            auto tmp = *sharedPtr;
+            sharedPtr.reset();
+            sharedPtr(new map_entity(tmp));
+        }
+    }
 
 public:
     insertion_ordered_map() : sharedPtr(new map_entity) {}
@@ -30,50 +65,65 @@ public:
         other.sharedPtr.reset();
     }
 
-    insertion_ordered_map &operator=(insertion_ordered_map other) {}
+    insertion_ordered_map &operator=(insertion_ordered_map other) {
+        if (sharedPtr.use_count() > 1) {
+            sharedPtr.reset();
+        }
+
+        sharedPtr = std::make_shared<map_entity>(*other.sharedPtr);
+    }
 
     bool insert(K const &k, V const &v) {
     }
 
     void erase(K const &k) {
-        auto value = sharedPtr.get()->list.find(k);
-        if (value == sharedPtr.get()->map.end()) {
-            throw lookup_error();
-        }
-        else {
-            sharedPtr.get()->list.erase(value.second);
-            sharedPtr.get()->map.erase(value.first);
-        }
+        copySharedPtrIfNecessary();
+
+        sharedPtr->erase(k);
     }
 
     void merge(insertion_ordered_map const &other) {}
 
     V &at(K const &k) {
-        return sharedPtr.get()->map.at(k)->value;
+        copySharedPtrIfNecessary();
+        auto tmp = sharedPtr->find(k);
+
+        return tmp->second;
     }
 
-    V const &at(K const &k) const {}
+    V const &at(K const &k) const {
+        auto tmp = sharedPtr->find(k);
 
-    V &operator[](K const &k) {}
+        return tmp->second;
+    }
+
+    V &operator[](K const &k) {
+        copySharedPtrIfNecessary();
+        auto tmp = sharedPtr->map->find(k);
+
+        if (tmp == sharedPtr->map.end()) {
+            sharedPtr.insert(k, new V());
+        }
+
+        return sharedPtr->map[k];
+    }
 
     [[nodiscard]] size_t size() const {
-        return sharedPtr.get()->list.size();
+        return sharedPtr->list.size();
     }
 
     [[nodiscard]] bool empty() const {
-        return sharedPtr.get()->list.empty();
+        return sharedPtr->list.empty();
     }
 
     void clear() {
-        if (sharedPtr.use_count() > 0) {
+        copySharedPtrIfNecessary();
 
-        }
-        sharedPtr.get()->map.clear();
-        sharedPtr.get()->list.clear();
+        sharedPtr->clear();
     }
 
     bool contains(K const &k) const {
-        return sharedPtr.get()->map.find(k) != sharedPtr.get()->map.end();
+        return sharedPtr->map.find(k) != sharedPtr->map.end();
     }
 
     /** Klasę iteratora o nazwie iterator oraz metody begin i end, pozwalające
