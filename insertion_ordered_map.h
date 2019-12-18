@@ -4,6 +4,8 @@
 #include <functional>
 #include <unordered_map>
 #include <utility>
+#include <list>
+#include <memory>
 
 
 class lookup_error : std::exception {
@@ -12,73 +14,67 @@ class lookup_error : std::exception {
 template<class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
-	struct Node {
-		K key;
-		V value;
-		Node *prev, *next;
-	} typedef Node;
+    struct map_entity {
+        std::list<std::pair<K, V>> list;
+        std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash> map;
+    };
 
-	Node *first = nullptr, *last = nullptr;
-
-	void add_new_Node() {
-		Node* ret = new Node;
-		ret->prev = last;
-		ret->next = nullptr;
-		last = ret;
-	}
-
-	std::unordered_map<K, Node*> map;
-
+    std::shared_ptr<map_entity> sharedPtr;
 
 public:
-    insertion_ordered_map() {
-    	add_new_Node();
-    	first = last;
+    insertion_ordered_map() : sharedPtr(new map_entity) {}
+
+    insertion_ordered_map(insertion_ordered_map const &other) : sharedPtr(other.sharedPtr) {}
+
+    insertion_ordered_map(insertion_ordered_map &&other) noexcept: sharedPtr(other.sharedPtr) {
+        other.sharedPtr.reset();
     }
-
-    insertion_ordered_map(insertion_ordered_map const &other) {}
-
-    insertion_ordered_map(insertion_ordered_map &&other) {}
 
     insertion_ordered_map &operator=(insertion_ordered_map other) {}
 
     bool insert(K const &k, V const &v) {
-    	last->key = k;
-    	last->value = v;
-    	auto res = map.emplace(std::make_pair(k, last));
-    	if (res.second) {
-    		add_new_Node();
-    	}
-    	else {
-    		Node* node = res.first->second;
-    		node->prev->next = node->next;
-    		node->next->prev = node->prev;
-    		last->next = node;
-    		node->prev = last;
-    		last = node;
-    	}
-    	return res.second;
     }
 
-    void erase(K const &k) {}
+    void erase(K const &k) {
+        auto value = sharedPtr.get()->list.find(k);
+        if (value == sharedPtr.get()->map.end()) {
+            throw lookup_error();
+        }
+        else {
+            sharedPtr.get()->list.erase(value.second);
+            sharedPtr.get()->map.erase(value.first);
+        }
+    }
 
     void merge(insertion_ordered_map const &other) {}
 
     V &at(K const &k) {
-    	return map.at(k)->value;
+        return sharedPtr.get()->map.at(k)->value;
     }
 
     V const &at(K const &k) const {}
 
     V &operator[](K const &k) {}
 
-    size_t size() const {}
+    [[nodiscard]] size_t size() const {
+        return sharedPtr.get()->list.size();
+    }
 
-    bool empty() const {}
+    [[nodiscard]] bool empty() const {
+        return sharedPtr.get()->list.empty();
+    }
 
-    void clear() {}
+    void clear() {
+        if (sharedPtr.use_count() > 0) {
 
-    bool contains(K const &k) const {}
+        }
+        sharedPtr.get()->map.clear();
+        sharedPtr.get()->list.clear();
+    }
+
+    bool contains(K const &k) const {
+        return sharedPtr.get()->map.find(k) != sharedPtr.get()->map.end();
+    }
 
     /** Klasę iteratora o nazwie iterator oraz metody begin i end, pozwalające
         przeglądać zbiór kluczy w kolejności ich wstawienia. Iteratory mogą być
