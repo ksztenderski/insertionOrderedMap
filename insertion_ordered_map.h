@@ -66,14 +66,33 @@ public:
     }
 
     insertion_ordered_map &operator=(insertion_ordered_map other) {
-        if (sharedPtr.use_count() > 1) {
-            sharedPtr.reset();
-        }
-
-        sharedPtr = std::make_shared<map_entity>(*other.sharedPtr);
+        sharedPtr = other.sharedPtr;
+        return *this;
     }
 
     bool insert(K const &k, V const &v) {
+    	if (!sharedPtr.unique()) {
+    		sharedPtr = std::make_shared<map_entity>(sharedPtr);
+    	}
+
+    	std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash>
+    	        map = sharedPtr.get();
+    	std::list<std::pair<K, V>> list = sharedPtr.get();
+    	auto found = map->find(k);
+    	if (found == map->end()) {
+    		std::pair<K, V> list_pair = make_pair(k, v);
+    		list.push_back(list_pair);
+    		std::pair<K, typename std::list<std::pair<K, V>>::iterator>
+    		        map_pair = make_pair(k, list.end()--);
+    		map.insert(map_pair);
+
+    		return true;
+    	}
+    	else {
+    		list.splice(list.end(), list, found);
+
+    		return false;
+    	}
     }
 
     void erase(K const &k) {
