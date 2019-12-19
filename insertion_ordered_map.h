@@ -9,6 +9,9 @@
 
 
 class lookup_error : std::exception {
+    [[nodiscard]] const char *what() const noexcept override {
+        return "lookup_error";
+    }
 };
 
 template<class K, class V, class Hash = std::hash<K>>
@@ -103,7 +106,14 @@ public:
         map->erase(k);
     }
 
-    void merge(insertion_ordered_map const &other) {}
+    void merge(insertion_ordered_map const &other) {
+        if (!list.unique()) copyList();
+        if (!map.unique()) copyMap();
+
+        for (auto item : *other.list) {
+            insert(item.first, item.second);
+        }
+    }
 
     V &at(K const &k) {
         if (!list.unique()) copyList();
@@ -169,15 +179,6 @@ public:
         return map->find(k) != map->end();
     }
 
-    /** Klasę iteratora o nazwie iterator oraz metody begin i end, pozwalające
-        przeglądać zbiór kluczy w kolejności ich wstawienia. Iteratory mogą być
-        unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem.
-        Iterator powinien udostępniać przynajmniej następujące operacje:
-        - konstruktor bezparametrowy i kopiujący
-        - operator++ prefiksowy
-        - operator== i operator!=
-        - operator* (dereferencji)
-        Wszystkie operacje w czasie O(1). Przejrzenie całego słownika w czasie O(n)*/
     class iterator {
         typename list_t::const_iterator itr;
 

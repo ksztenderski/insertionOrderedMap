@@ -76,13 +76,13 @@ int main() {
             assert(it->first == order[i] && it->second == values[i]);
     }
 
-    std::swap(iom1, iom2);
-    std::vector<insertion_ordered_map<int, int>> vec;
-    for (int i = 0; i < 100000; i++) {
-        iom1.insert(i, i);
-    }
-    for (int i = 0; i < 1000000; i++) {
-        vec.push_back(iom1);  // Wszystkie obiekty w vec współdzielą dane.
-    }
+//    std::swap(iom1, iom2);
+//    std::vector<insertion_ordered_map<int, int>> vec;
+//    for (int i = 0; i < 100000; i++) {
+//        iom1.insert(i, i);
+//    }
+//    for (int i = 0; i < 1000000; i++) {
+//        vec.push_back(iom1);  // Wszystkie obiekty w vec współdzielą dane.
+//    }
     return 0;
 }
