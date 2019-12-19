@@ -25,7 +25,8 @@ int main() {
     }
     auto &ref = iom1[3];
 
-    insertion_ordered_map<int, int> iom2(iom1); // Wykonuje się pełna kopia. Dlaczego?
+    insertion_ordered_map<int, int> iom2(
+            iom1); // Wykonuje się pełna kopia. Dlaczego?
     insertion_ordered_map<int, int> iom3;
     iom3 = iom2;
 
@@ -33,7 +34,8 @@ int main() {
     assert(iom1[3] == 10);
     assert(iom2[3] != 10);
 
-    iom2.erase(3); // Obiekt iom2 dokonuje kopii i przestaje współdzielić dane z iom3.
+    iom2.erase(
+            3); // Obiekt iom2 dokonuje kopii i przestaje współdzielić dane z iom3.
     assert(iom2.size() == 2);
     assert(!iom2.contains(3));
     assert(iom2.contains(2));

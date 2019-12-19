@@ -182,12 +182,15 @@ public:
         typename list_t::const_iterator itr;
 
     public:
+        friend insertion_ordered_map;
+
         iterator() = default;
 
-        iterator(iterator const &other) : itr(other) {}
+        iterator(iterator const &other) : itr(other.itr) {}
 
         iterator &operator++() {
-            return ++itr;
+            ++itr;
+            return *this;
         }
 
         bool operator==(const iterator &rhs) const {
@@ -198,11 +201,11 @@ public:
             return !(rhs == *this);
         }
 
-        const V &operator*() const {
+        const std::pair<K, V> &operator*() const {
             return *itr;
         }
 
-        V operator->() const {
+        const std::pair<K, V> *operator->() const {
             return &(*itr);
         }
     };
