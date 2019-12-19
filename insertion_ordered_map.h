@@ -49,16 +49,16 @@ public:
 		must_be_copied = false;
 	}
 
-	insertion_ordered_map(insertion_ordered_map const &other) {
-		if (other.must_be_copied) {
-			list = std::make_shared<list_t>(list_t(*other.list));
-			map = std::make_shared<map_t>(map_t(*other.map));
-		} else {
-			list = other.list;
-			map = other.map;
-		}
-		must_be_copied = false;
-	}
+    insertion_ordered_map(insertion_ordered_map const &other) {
+        if (other.must_be_copied) {
+            list = std::make_shared<list_t>(list_t(*other.list));
+            copyMap();
+        } else {
+            list = other.list;
+            map = other.map;
+        }
+        must_be_copied = false;
+    }
 
 	insertion_ordered_map(insertion_ordered_map &&other) noexcept {
 		list = std::move(other.list);
