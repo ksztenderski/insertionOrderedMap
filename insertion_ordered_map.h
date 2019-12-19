@@ -78,6 +78,7 @@ public:
 		try {
 			if (!list.unique()) copyList();
 			if (!map.unique()) copyMap();
+			must_be_copied = false;
 		} catch (std::exception& e) {
 			list.reset(aux_list);
 			map.reset(aux_map);
@@ -111,6 +112,7 @@ public:
 		try {
 			if (!list.unique()) copyList();
 			if (!map.unique()) copyMap();
+			must_be_copied = false;
 		} catch(std::exception& e) {
 			list.reset(aux_list);
 			map.reset(aux_map);
@@ -132,6 +134,7 @@ public:
 		try {
 			if (!list.unique()) copyList();
 			if (!map.unique()) copyMap();
+			must_be_copied = false;
 		} catch(std::exception& e) {
 			list.reset(aux_list);
 			map.reset(aux_map);
@@ -218,6 +221,7 @@ public:
 			} else {
 				map->clear();
 			}
+			must_be_copied = false;
 		} catch(std::exception& e) {
 			list.reset(aux_list);
 			map.reset(aux_map);
