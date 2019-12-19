@@ -14,140 +14,210 @@ class lookup_error : std::exception {
 template<class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
-	using list_t = std::list<std::pair<K, V>>;
-	using map_t = std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash>;
+    using list_t = std::list<std::pair<K, V>>;
+    using map_t = std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator, Hash>;
 
-	std::shared_ptr<list_t> sharedList;
-	std::shared_ptr<map_t> sharedMap;
+    std::shared_ptr<list_t> list;
+    std::shared_ptr<map_t> map;
 
-	void copySharedListIfNecessary() {
-		if (!sharedList.unique()) {
-			sharedList = std::make_shared<list_t>(*sharedList);
-		}
-	}
+    bool must_be_copied;
 
-	void copySharedMapIfNecessary() {
-		if (!sharedMap.unique()) {
-			sharedMap = std::make_shared<map_t>(*sharedMap);
-		}
-	}
+    void copyList() {
+        list_t newList(*list);
+        list.reset();
+        list = std::make_shared<list_t>(newList);
+    }
+
+    void copyMap() {
+        map_t newMap;
+
+        for (auto itr = list->begin(); itr != list->end(); ++itr) {
+            newMap.insert({itr->first, itr});
+        }
+
+        map.reset();
+        map = std::make_shared<map_t>(newMap);
+    }
 
 public:
-	insertion_ordered_map() : sharedList(new list_t), sharedMap(new map_t) {}
+    insertion_ordered_map() {
+        list = std::make_shared<list_t>();
+        map = std::make_shared<map_t>();
+        must_be_copied = false;
+    }
 
-	insertion_ordered_map(insertion_ordered_map const &other) : sharedList(other.sharedList),
-																sharedMap(other.sharedMap) {}
+    insertion_ordered_map(insertion_ordered_map const &other) {
+        if (other.must_be_copied) {
+            list = std::make_shared<list_t>(list_t(*other.list));
+            map = std::make_shared<map_t>(map_t(*other.map));
+        } else {
+            list = other.list;
+            map = other.map;
+        }
 
-	insertion_ordered_map(insertion_ordered_map &&other) noexcept {}
+        must_be_copied = false;
+    }
 
-	insertion_ordered_map &operator=(insertion_ordered_map other) {
-		sharedMap = other.sharedMap;
-		sharedList = other.sharedList;
-		return *this;
-	}
+    insertion_ordered_map(insertion_ordered_map &&other) noexcept {
+        list = std::move(other.list);
+        map = std::move(other.map);
+        must_be_copied = false;
+    }
 
-	bool insert(K const &k, V const &v) {
-		copySharedListIfNecessary();
-		copySharedMapIfNecessary();
+    insertion_ordered_map &operator=(insertion_ordered_map other) {
+        map = other.map;
+        list = other.list;
+        return *this;
+    }
 
-		auto found = sharedMap->find(k);
-		if (found == sharedMap->end()) {
-			std::pair<K, V> list_pair = std::make_pair(k, v);
-			sharedList->push_back(list_pair);
-			std::pair<K, typename std::list<std::pair<K, V>>::iterator>
-					map_pair = make_pair(k, --sharedList->end());
-			sharedMap->insert(map_pair);
+    bool insert(K const &k, V const &v) {
+        if (!list.unique()) copyList();
+        if (!map.unique()) copyMap();
 
-			return true;
-		}
-		else {
-			sharedList->splice(sharedList->end(), *sharedList, found->second);
+        auto found = map->find(k);
+        if (found == map->end()) {
+            std::pair<K, V> list_pair = std::make_pair(k, v);
+            list->push_back(list_pair);
+            std::pair<K, typename std::list<std::pair<K, V>>::iterator>
+                    map_pair = make_pair(k, --list->end());
+            map->insert(map_pair);
 
-			return false;
-		}
-	}
+            return true;
+        } else {
+            list->splice(list->end(), *list, found->second);
 
-	void erase(K const &k) {
-		copySharedListIfNecessary();
-		copySharedMapIfNecessary();
+            return false;
+        }
+    }
 
-		auto tmp = sharedMap->find(k);
-		if (tmp == sharedMap->end()) {
-			throw lookup_error();
-		}
+    void erase(K const &k) {
+        if (!list.unique()) copyList();
+        if (!map.unique()) copyMap();
 
-		sharedList->erase(k);
-	}
+        auto tmp = map->find(k);
+        if (tmp == map->end()) {
+            throw lookup_error();
+        }
 
-	void merge(insertion_ordered_map const &other) {}
+        list->erase(tmp->second);
+        map->erase(k);
+    }
 
-	V &at(K const &k) {
-		copySharedListIfNecessary();
-		copySharedMapIfNecessary();
+    void merge(insertion_ordered_map const &other) {}
 
-		try {
-			return sharedMap->at(k)->second;
-		}
-		catch (const std::out_of_range &e) {
-			throw lookup_error();
-		}
-	}
+    V &at(K const &k) {
+        if (!list.unique()) copyList();
+        if (!map.unique()) copyMap();
+        must_be_copied = true;
 
-	V const &at(K const &k) const {
+        try {
+            return map->at(k)->second;
+        }
+        catch (const std::out_of_range &e) {
+            throw lookup_error();
+        }
+    }
 
-		try {
-			return sharedMap->at(k)->second;
-		}
-		catch (const std::out_of_range &e) {
-			throw lookup_error();
-		}
-	}
+    V const &at(K const &k) const {
+        try {
+            return map->at(k)->second;
+        }
+        catch (const std::out_of_range &e) {
+            throw lookup_error();
+        }
+    }
 
-	V &operator[](K const &k) {
-		copySharedListIfNecessary();
-		copySharedMapIfNecessary();
+    V &operator[](K const &k) {
+        if (!list.unique()) copyList();
+        if (!map.unique()) copyMap();
+        must_be_copied = true;
 
-		auto result = sharedMap->find(k);
+        auto result = map->find(k);
 
-		if (result == sharedMap->end()) {
-			insert(k, new V());
-		}
+        if (result == map->end()) {
+            insert(k, V());
+        }
 
-		return sharedMap.get()[k];
-	}
+        return map->at(k)->second;
+    }
 
-	[[nodiscard]] size_t size() const {
-		return sharedList->size();
-	}
+    [[nodiscard]] size_t size() const {
+        return list->size();
+    }
 
-	[[nodiscard]] bool empty() const {
-		return sharedList->empty();
-	}
+    [[nodiscard]] bool empty() const {
+        return list->empty();
+    }
 
-	void clear() {
-		copySharedListIfNecessary();
-		copySharedMapIfNecessary();
+    void clear() {
+        if (!list.unique()) {
+            list.reset();
+            list = std::make_shared<list_t>();
+        } else {
+            list->clear();
+        }
 
-		sharedMap->clear();
-		sharedList->clear();
-	}
+        if (!map.unique()) {
+            map.reset();
+            map = std::make_shared<map_t>();
+        } else {
+            map->clear();
+        }
+    }
 
-	bool contains(K const &k) const {
-		return sharedMap->find(k) != sharedMap->end();
-	}
+    bool contains(K const &k) const {
+        return map->find(k) != map->end();
+    }
 
-	/** Klasę iteratora o nazwie iterator oraz metody begin i end, pozwalające
-		przeglądać zbiór kluczy w kolejności ich wstawienia. Iteratory mogą być
-		unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem.
-		Iterator powinien udostępniać przynajmniej następujące operacje:
-		- konstruktor bezparametrowy i kopiujący
-		- operator++ prefiksowy
-		- operator== i operator!=
-		- operator* (dereferencji)
-		Wszystkie operacje w czasie O(1). Przejrzenie całego słownika w czasie O(n)*/
-	class iterator {
-	};
+    /** Klasę iteratora o nazwie iterator oraz metody begin i end, pozwalające
+        przeglądać zbiór kluczy w kolejności ich wstawienia. Iteratory mogą być
+        unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem.
+        Iterator powinien udostępniać przynajmniej następujące operacje:
+        - konstruktor bezparametrowy i kopiujący
+        - operator++ prefiksowy
+        - operator== i operator!=
+        - operator* (dereferencji)
+        Wszystkie operacje w czasie O(1). Przejrzenie całego słownika w czasie O(n)*/
+    class iterator {
+        typename list_t::const_iterator itr;
 
+    public:
+        iterator() = default;
+
+        iterator(iterator const &other) : itr(other) {}
+
+        iterator &operator++() {
+            return ++itr;
+        }
+
+        bool operator==(const iterator &rhs) const {
+            return itr == rhs.itr;
+        }
+
+        bool operator!=(const iterator &rhs) const {
+            return !(rhs == *this);
+        }
+
+        const V &operator*() const {
+            return *itr;
+        }
+
+        V operator->() const {
+            return &(*itr);
+        }
+    };
+
+    iterator begin() const {
+        iterator iterator;
+        iterator.itr = list->cbegin();
+        return iterator;
+    }
+
+    iterator end() const {
+        iterator iterator;
+        iterator.itr = list->cend();
+        return iterator;
+    }
 };
 
 #endif //INSERTION_ORDERED_MAP_H
