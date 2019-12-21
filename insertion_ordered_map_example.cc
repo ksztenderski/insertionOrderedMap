@@ -8,12 +8,6 @@ namespace {
     }
 }
 
-class A {
-    int print() {
-        return 13;
-    }
-};
-
 int main() {
     int keys[] = {3, 1, 2};
 
