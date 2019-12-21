@@ -1,7 +1,9 @@
 #ifndef INSERTION_ORDERED_MAP_H
 #define INSERTION_ORDERED_MAP_H
 
+#include <functional>
 #include <unordered_map>
+#include <utility>
 #include <list>
 #include <memory>
 
