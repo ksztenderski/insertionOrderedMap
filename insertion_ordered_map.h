@@ -6,6 +6,7 @@
 #include <utility>
 #include <list>
 #include <memory>
+#include <type_traits>
 
 /// Exception thrown when a key is not found in the container.
 class lookup_error : std::exception {
@@ -68,26 +69,34 @@ public:
     /// Copy constructor - COW. Containers share structures until one is modified.
     insertion_ordered_map(insertion_ordered_map const &other) {
         if (other.mustBeCopied) {
-            list = std::make_shared<list_t>(list_t(*other.list));
-            copyMap();
+        	try {
+		        list = std::make_shared<list_t>(list_t(*other.list));
+		        copyMap();
+		        mustBeCopied = false;
+	        } catch (std::exception& e) {
+        		list.reset();
+        		map.reset();
+        		throw e;
+        	}
         } else {
             list = other.list;
             map = other.map;
+            mustBeCopied = other.mustBeCopied;
         }
-        mustBeCopied = false;
     }
 
     /// Move constructor.
     insertion_ordered_map(insertion_ordered_map &&other) noexcept {
         list = std::move(other.list);
         map = std::move(other.map);
-        mustBeCopied = false;
+        mustBeCopied = other.mustBeCopied;
     }
 
     /// Assignment operator.
     insertion_ordered_map &operator=(insertion_ordered_map other) {
         map = other.map;
         list = other.list;
+        mustBeCopied = other.mustBeCopied;
         return *this;
     }
 
@@ -160,7 +169,7 @@ public:
             throw lookup_error();
         }
 
-	    list->erase(tmp->second);
+        list->erase(tmp->second);
         map->erase(k);
     }
 
@@ -243,6 +252,7 @@ public:
      * @param k - key;
      * @return reference to the element with key @k.
      */
+    template <typename = std::enable_if_t<is_default_constructible<V>::value>>
     V &operator[](K const &k) {
         list_t *aux_list = list.get();
         map_t *aux_map = map.get();
