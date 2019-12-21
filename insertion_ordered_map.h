@@ -97,8 +97,8 @@ public:
      * element already in the container otherwise value of element with
      * equivalent key doesn't change but the element is moved to the end of
      * iteration order.
-     * @param k - key of element
-     * @param v - value of element
+     * @param k - key of element;
+     * @param v - value of element;
      * @return @p true if element was successfully inserted, @p false if element
      * with the equivalent key was already in the container.
      */
@@ -139,7 +139,7 @@ public:
 
     /**
      * @brief Erases element with key @p k.
-     * @param k - key
+     * @param k - key;
      * @throws lookup_error when there was no element with key @p k.
      */
     void erase(K const &k) {
@@ -160,15 +160,15 @@ public:
             throw lookup_error();
         }
 
+	    list->erase(tmp->second);
         map->erase(k);
-        list->erase(tmp->second);
     }
 
     /**
-     * @brief Inserts copies of all elements form container @p other to *this.
+     * @brief Inserts copies of all elements from container @p other to *this.
      * Values of elements with equivalent keys already in the container don't
      * change. Elements from @p other are inserted at the end, keeping their order.
-     * @param other - container to merge with *this
+     * @param other - container to merge with *this.
      */
     void merge(insertion_ordered_map const &other) {
         list_t *aux_list = list.get();
@@ -192,8 +192,8 @@ public:
     /**
      * Returns a reference to the mapped value of element with key @p k
      * in the container.
-     * @param k - key
-     * @return reference to the element with key @k.
+     * @param k - key;
+     * @return reference to the element with key @k;
      * @throws lookup_error when there was no element with key @p k.
      */
     V &at(K const &k) {
@@ -223,7 +223,7 @@ public:
     /**
      * Returns a const reference to the mapped value of element with key @p k
      * in the container.
-     * @param k - key
+     * @param k - key;
      * @return const reference to the element with key @k.
      */
     V const &at(K const &k) const {
@@ -240,7 +240,7 @@ public:
      * in the container. If @k does not match the key of any element in
      * the container, the function inserts a new element with that key and
      * default value of @p V.
-     * @param k - key
+     * @param k - key;
      * @return reference to the element with key @k.
      */
     V &operator[](K const &k) {
@@ -273,7 +273,7 @@ public:
     }
 
     /**
-     * Returns a bool value indicating whether the container is empty
+     * Returns a bool value indicating whether the container is empty.
      * @return @p true if container is empty, @p false otherwise.
      */
     [[nodiscard]] bool empty() const noexcept {
@@ -309,8 +309,8 @@ public:
 
     /**
      * Returns a bool value indicating whether the container stores element with
-     * @p k key,
-     * @param k - key
+     * @p k key.
+     * @param k - key;
      * @return @p true if element with key @k was found in the container,
      * @p false otherwise.
      */
