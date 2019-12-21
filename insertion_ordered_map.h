@@ -69,15 +69,15 @@ public:
     /// Copy constructor - COW. Containers share structures until one is modified.
     insertion_ordered_map(insertion_ordered_map const &other) {
         if (other.mustBeCopied) {
-        	try {
-		        list = std::make_shared<list_t>(list_t(*other.list));
-		        copyMap();
-		        mustBeCopied = false;
-	        } catch (std::exception& e) {
-        		list.reset();
-        		map.reset();
-        		throw e;
-        	}
+            try {
+                list = std::make_shared<list_t>(list_t(*other.list));
+                copyMap();
+                mustBeCopied = false;
+            } catch (std::exception &e) {
+                list.reset();
+                map.reset();
+                throw e;
+            }
         } else {
             list = other.list;
             map = other.map;
@@ -252,7 +252,7 @@ public:
      * @param k - key;
      * @return reference to the element with key @k.
      */
-    template <typename = std::enable_if_t<is_default_constructible<V>::value>>
+    template<typename = std::enable_if_t<std::is_default_constructible<V>::value>>
     V &operator[](K const &k) {
         list_t *aux_list = list.get();
         map_t *aux_map = map.get();
