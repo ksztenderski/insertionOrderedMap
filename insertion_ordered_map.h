@@ -73,7 +73,7 @@ public:
                 list = std::make_shared<list_t>(list_t(*other.list));
                 copyMap();
                 mustBeCopied = false;
-            } catch (std::exception &e) {
+            } catch (const std::exception &e) {
                 list.reset();
                 map.reset();
                 throw e;
@@ -117,7 +117,7 @@ public:
         try {
             if (!list.unique()) copyList();
             if (!map.unique()) copyMap();
-        } catch (std::exception &e) {
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
             throw e;
@@ -133,7 +133,7 @@ public:
                 std::pair<K, typename std::list<std::pair<K, V>>::iterator>
                         map_pair = make_pair(k, --list->end());
                 map->insert(map_pair);
-            } catch (std::exception &e) {
+            } catch (const std::exception &e) {
                 list->pop_back();
                 throw e;
             }
@@ -158,7 +158,7 @@ public:
             if (!list.unique()) copyList();
             if (!map.unique()) copyMap();
             mustBeCopied = false;
-        } catch (std::exception &e) {
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
             throw e;
@@ -191,11 +191,22 @@ public:
             }
 
             mustBeCopied = false;
-        } catch (std::exception &e) {
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
             throw e;
         }
+    }
+
+    /**
+     * Returns a bool value indicating whether the container stores element with
+     * @p k key.
+     * @param k - key;
+     * @return @p true if element with key @k was found in the container,
+     * @p false otherwise.
+     */
+    bool contains(K const &k) const {
+        return map->find(k) != map->end();
     }
 
     /**
@@ -206,6 +217,13 @@ public:
      * @throws lookup_error when there was no element with key @p k.
      */
     V &at(K const &k) {
+        try {
+            if (!contains(k)) throw lookup_error();
+        }
+        catch (const std::exception &e) {
+            throw e;
+        }
+
         list_t *aux_list = list.get();
         map_t *aux_map = map.get();
         bool mustBeCopiedBefore = mustBeCopied;
@@ -213,19 +231,13 @@ public:
         try {
             if (!list.unique()) copyList();
             if (!map.unique()) copyMap();
-        } catch (std::exception &e) {
+            mustBeCopied = true;
+            return map->at(k)->second;
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
-            throw e;
-        }
-        mustBeCopied = true;
-
-        try {
-            return map->at(k)->second;
-        }
-        catch (const std::out_of_range &e) {
             mustBeCopied = mustBeCopiedBefore;
-            throw lookup_error();
+            throw e;
         }
     }
 
@@ -269,7 +281,7 @@ public:
             mustBeCopied = true;
 
             return map->at(k)->second;
-        } catch (std::exception &e) {
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
             mustBeCopied = mustBeCopiedBefore;
@@ -310,22 +322,11 @@ public:
                 map->clear();
             }
             mustBeCopied = false;
-        } catch (std::exception &e) {
+        } catch (const std::exception &e) {
             list.reset(aux_list);
             map.reset(aux_map);
             throw e;
         }
-    }
-
-    /**
-     * Returns a bool value indicating whether the container stores element with
-     * @p k key.
-     * @param k - key;
-     * @return @p true if element with key @k was found in the container,
-     * @p false otherwise.
-     */
-    bool contains(K const &k) const {
-        return map->find(k) != map->end();
     }
 
     /// Iterator class for getting order of elements in the container.
