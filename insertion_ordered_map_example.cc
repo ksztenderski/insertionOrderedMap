@@ -3,32 +3,40 @@
 #include <vector>
 #include <string>
 #include <cassert>
+
 using namespace std;
 int ile = 0;
 string message;
 bool rzucaj = false;
 bool wypisuj = true;
-class XD {};
+
+class XD {
+};
+
 class Key {
 public:
-    int v=0;
+    int v = 0;
+
     Key() {}
-    explicit Key(int w): v(w) {}
+
+    explicit Key(int w) : v(w) {}
+
     Key(const Key &k) {
         v = k.v;
         if (ile > 0) {
             if (wypisuj) cout << message << "\n";
             ile--;
         }
-        if (!wypisuj && ile==0) throw XD{};
+        if (!wypisuj && ile == 0) throw XD{};
         if (rzucaj) throw XD{};
     }
-    Key(Key &&k) noexcept{
+
+    Key(Key &&k) noexcept {
         v = std::move(k.v);
     }
 
-    Key& operator=(Key k) noexcept {
-        v=std::move(k.v);
+    Key &operator=(Key k) noexcept {
+        v = std::move(k.v);
         return *this;
     }
 };
@@ -36,6 +44,7 @@ public:
 bool operator==(Key const &lhs, Key const &rhs) {
     return lhs.v == rhs.v;
 }
+
 bool operator!=(Key const &lhs, Key const &rhs) {
     return lhs.v != rhs.v;
 }
@@ -45,10 +54,11 @@ struct Hash {
         return std::hash<int>()(k.v);
     }
 };
-void check(const insertion_ordered_map<Key,int,Hash> &m,
-           const vector<int>&order, const vector<int>&values) {
-    auto o=order.begin();
-    auto v=values.begin();
+
+void check(const insertion_ordered_map<Key, int, Hash> &m,
+           const vector<int> &order, const vector<int> &values) {
+    auto o = order.begin();
+    auto v = values.begin();
     for (auto &i:m) {
         assert(i.first == Key(*o));
         assert(i.second == *v);
@@ -57,10 +67,10 @@ void check(const insertion_ordered_map<Key,int,Hash> &m,
     }
 }
 
-void check2(const insertion_ordered_map<Key,Key,Hash> &m,
-            const vector<int>&order, const vector<int>&values) {
-    auto o=order.begin();
-    auto v=values.begin();
+void check2(const insertion_ordered_map<Key, Key, Hash> &m,
+            const vector<int> &order, const vector<int> &values) {
+    auto o = order.begin();
+    auto v = values.begin();
     for (auto &i:m) {
         assert(i.first == Key(*o));
         assert(i.second == Key(*v));
@@ -69,10 +79,10 @@ void check2(const insertion_ordered_map<Key,Key,Hash> &m,
     }
 }
 
-void check3(const insertion_ordered_map<Key,Key,Hash> &m,
-            vector<typename insertion_ordered_map<Key,Key,Hash>::iterator> &order) {
-    size_t xd=0;
-    for (auto it=m.begin(); it!=m.end(); ++it, ++xd) {
+void check3(const insertion_ordered_map<Key, Key, Hash> &m,
+            vector<typename insertion_ordered_map<Key, Key, Hash>::iterator> &order) {
+    size_t xd = 0;
+    for (auto it = m.begin(); it != m.end(); ++it, ++xd) {
         assert(it == order[xd]);
         assert(it->first == order[xd]->first);
         assert(it->second == order[xd]->second);
@@ -92,7 +102,7 @@ int main() {
 //        cout << "bad_alloc (ok)\n";
 //    }
     insertion_ordered_map<Key, int, Hash> m1;
-    m1.insert(Key{2},3);
+    m1.insert(Key{2}, 3);
     ile = 1;
     message = "gunwo";
     insertion_ordered_map<Key, int, Hash> m2(m1); // nic nie powinno sie wypisać
@@ -111,7 +121,7 @@ int main() {
         ref = 1;
         assert(m3[Key(2)] == 3);
     } catch (XD &e) {
-        cout <<"ok\n";
+        cout << "ok\n";
     } catch (...) {
         cout << "????????\n";
         throw;
@@ -130,7 +140,8 @@ int main() {
     }
     rzucaj = false;
     auto &r = m1[Key(2)];
-    m1.erase(Key(2)); // dalej powinien być czysty – zmiana słownika unieważnia referencje do obiektów
+    m1.erase(
+            Key(2)); // dalej powinien być czysty – zmiana słownika unieważnia referencje do obiektów
     rzucaj = true;
     try {
         insertion_ordered_map<Key, int, Hash> ddd(m1);
@@ -140,39 +151,39 @@ int main() {
         throw;
     }
     insertion_ordered_map<Key, int, Hash> c = std::move(m1);
-    size_t s = m1.size(); // Peczar mówił że jak jest segfault to jest źle
+//    size_t s = m1.size(); // Peczar mówił że jak jest segfault to jest źle
 //    assert(m1.begin() == m1.begin() && m1.end() == m1.end());
-//    rzucaj = false;
-//    m1.clear();
-//    for (int i = 5; i > 0; i--) m1.insert(Key(i),i+2);
-//    int dd=5;
-//    for (insertion_ordered_map<Key, int, Hash>::iterator it = m1.begin(); it != m1.end(); ++it, dd--) {
-//        if (dd == 5) assert(it == m1.begin());
-//        assert(it->first == Key(dd) && it->second == dd+2);
-//        assert((*it).first == Key(dd) && (*it).second == dd+2);
-//        insertion_ordered_map<Key, int, Hash>::iterator j(it);
-//        assert(it == j);
-//        assert(j->first == Key(dd) && j->second == dd+2);
-//    }
-//    assert(m1.begin() != m1.end());
-//    m1.merge(m1);
-//    assert(m1.size() == 5);
-//    check(m1, {5, 4, 3, 2, 1}, {7, 6, 5, 4, 3});
-//    m2.clear();
-//    for (int i=1; i<=3; i++) m2[Key(i)]=i+2;
-//    check(m2, {1,2,3}, {3,4,5});
-//    m1.merge(m2);
-//    check(m1, {5, 4, 1, 2, 3}, {7, 6, 3,4,5});
-//    for (int i=1; i<=3; i++) m2[Key(i)] = i;
-//    m1.merge(m2);
-//    check(m1, {5, 4, 1, 2, 3}, {7, 6, 3, 4, 5});
-//    m1.clear();
-//    vector<int> v1;
-//    for (int i=1; i<10000000; i++) {
-//        v1.push_back(i);
-//        m1.insert(Key(i),i);
-//    }
-//    check(m1, v1, v1);
+    rzucaj = false;
+    m1.clear();
+    for (int i = 5; i > 0; i--) m1.insert(Key(i),i+2);
+    int dd=5;
+    for (insertion_ordered_map<Key, int, Hash>::iterator it = m1.begin(); it != m1.end(); ++it, dd--) {
+        if (dd == 5) assert(it == m1.begin());
+        assert(it->first == Key(dd) && it->second == dd+2);
+        assert((*it).first == Key(dd) && (*it).second == dd+2);
+        insertion_ordered_map<Key, int, Hash>::iterator j(it);
+        assert(it == j);
+        assert(j->first == Key(dd) && j->second == dd+2);
+    }
+    assert(m1.begin() != m1.end());
+    m1.merge(m1);
+    assert(m1.size() == 5);
+    check(m1, {5, 4, 3, 2, 1}, {7, 6, 5, 4, 3});
+    m2.clear();
+    for (int i=1; i<=3; i++) m2[Key(i)]=i+2;
+    check(m2, {1,2,3}, {3,4,5});
+    m1.merge(m2);
+    check(m1, {5, 4, 1, 2, 3}, {7, 6, 3,4,5});
+    for (int i=1; i<=3; i++) m2[Key(i)] = i;
+    m1.merge(m2);
+    check(m1, {5, 4, 1, 2, 3}, {7, 6, 3, 4, 5});
+    m1.clear();
+    vector<int> v1;
+    for (int i=1; i<10000000; i++) {
+        v1.push_back(i);
+        m1.insert(Key(i),i);
+    }
+    check(m1, v1, v1);
 //    m1.merge(m1);//*/
 //    check(m1, v1, v1); //może się wyjebać przez rehash
 //    // -------------

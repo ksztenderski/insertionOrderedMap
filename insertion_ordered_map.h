@@ -180,6 +180,8 @@ public:
      * @param other - container to merge with *this.
      */
     void merge(insertion_ordered_map const &other) {
+        if (list == other.list) return;
+
         list_t *aux_list = list.get();
         map_t *aux_map = map.get();
         try {
@@ -291,7 +293,7 @@ public:
 
     /// Returns the number of elements in the container.
     [[nodiscard]] size_t size() const noexcept {
-        return list->size();
+        return map->size();
     }
 
     /**
